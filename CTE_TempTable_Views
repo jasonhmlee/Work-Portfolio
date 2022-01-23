@@ -1,0 +1,43 @@
+--Total population vs vaccination using CTEv 
+WITH PopvsVac (continent, location, date, population, new_vaccinations, rolling_people_vaccinated) AS (
+	SELECT D.continent, D.location, D.date, D.population, V.new_vaccinations, SUM(V.new_vaccinations) OVER (Partition By D.location ORDER BY D.location, D.date)
+	FROM CovidDeaths D
+	JOIN CovidVaccinations V
+	ON D.location = V.location
+	AND D.date = V.date
+	WHERE D.continent IS NOT NULL)
+
+SELECT *, round(rolling_people_vaccinated::numeric / population * 100,2)
+FROM PopvsVac
+
+
+--CREATE TEMP TABLE
+CREATE TEMPORARY TABLE PercentPopulationVaccinated (
+continent varchar(50),
+location varchar(50),
+date date,
+population int,
+new_vaccinations int,
+rolling_people_vaccinated numeric
+)
+
+--INSERT INTO TEMP TABLE
+INSERT INTO PercentPopulationVaccinated 	
+	SELECT D.continent, D.location, D.date, D.population, V.new_vaccinations, SUM(V.new_vaccinations) OVER (Partition By D.location ORDER BY D.location, D.date)
+	FROM CovidDeaths D
+	JOIN CovidVaccinations V
+	ON D.location = V.location
+	AND D.date = V.date
+	WHERE D.continent IS NOT NULL
+--SELECT ALL FROM TEMP TABLE
+SELECT *, round(rolling_people_vaccinated::numeric / population * 100,2)
+FROM PercentPopulationVaccinated
+
+--CREATE VIEW TO STORE DATA FOR LATER VISUALIZATIONS
+CREATE VIEW PercentPopulationVaccinated AS	
+	SELECT D.continent, D.location, D.date, D.population, V.new_vaccinations, SUM(V.new_vaccinations) OVER (Partition By D.location ORDER BY D.location, D.date)
+	FROM CovidDeaths D
+	JOIN CovidVaccinations V
+	ON D.location = V.location
+	AND D.date = V.date
+	WHERE D.continent IS NOT NULL

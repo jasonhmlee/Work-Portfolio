@@ -1,0 +1,37 @@
+--SHOWS LIKELIHOOD OF DYING IF YOU HAVE COVID IN KOREA
+SELECT location, date, total_cases, total_deaths, round(total_deaths::numeric/total_cases*100,2) as DeathPercentage 
+FROM Coviddeaths
+WHERE location like '%South Korea%'
+ORDER BY 1,2
+
+--TOTAL CASES VS POPULATION
+SELECT location, date, population, total_cases, round(total_deaths::numeric/population*100,2) as Infection_Rate 
+FROM coviddeaths
+WHERE location like '%South Korea%'
+ORDER BY 1,2
+
+--LOOKING AT COUNTRIES WITH THE HIGHEST INFECTION RATE COMPARED TO POPULATION
+SELECT location, population, MAX(total_cases) as highestinfectioncount, MAX(round(total_cases::numeric/population*100,2)) as percent_population_infected
+FROM coviddeaths
+GROUP BY 1,2
+HAVING MAX(round(total_cases::numeric/population*100,2)) IS NOT NULL 
+ORDER BY MAX(round(total_cases::numeric/population*100,2)) desc
+
+--COUNTRIES WITH HIGHEST DEATHCOUNT PER POPULATION. REMOVE CONTINENTS AND NULL VALUES
+SELECT location, MAX(total_deaths)
+FROM coviddeaths
+WHERE continent IS NOT NULL
+GROUP BY 1
+HAVING MAX(total_deaths) IS NOT NULL
+ORDER BY 2 desc
+
+--TOTAL DEATH PERCENTAGE TO DATE
+SELECT sum(new_deaths) AS new_deaths, sum(new_cases) AS new_cases, round(sum(new_deaths)::numeric/sum(new_cases)*100,2) as Death_Percentage
+FROM coviddeaths
+
+--Example of Partition By
+SELECT location, date, new_cases, sum(new_cases) OVER (partition by location order by location,date), sum(new_cases) OVER (partition by location)
+FROM coviddeaths
+WHERE location = 'South Korea'
+AND date between '2020-04-07' AND '2020-04-10'
+
